@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-JeyOpV/xNfjbeCXe5NT9ai3rvSO/+THNpDrgKf9swY4='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>La macchina che indovina parole · cybernani</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="La macchina che indovina parole: un'animazione interattiva per spiegare ai bambini come funziona l'intelligenza artificiale, perché sbaglia e come usarla bene.">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#141a26">
+<meta property="og:type" content="website">
+<meta property="og:title" content="La macchina che indovina parole · cybernani">
+<meta property="og:description" content="La macchina che indovina parole: un'animazione interattiva per spiegare ai bambini come funziona l'intelligenza artificiale, perché sbaglia e come usarla bene.">
+<meta property="og:url" content="https://kindaichi-doyle.github.io/cybernani/intelligenza-artificiale/">
+<meta property="og:image" content="https://kindaichi-doyle.github.io/cybernani/og.png">
+<meta property="og:locale" content="it_IT">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:"Bricolage";src:url(../fonts/BricolageGrotesque.ttf) format("truetype");font-weight:200 800;font-stretch:75% 100%}
+@font-face{font-family:"Atkinson";src:url(../fonts/AtkinsonHyperlegible-Regular.ttf) format("truetype");font-weight:400}
+@font-face{font-family:"Atkinson";src:url(../fonts/AtkinsonHyperlegible-Bold.ttf) format("truetype");font-weight:700}
+:root{
+  --ink:#141a26;--paper:#f1f2f4;--ver:#ff5b2e;--ind:#6366f1;--teal:#1f8a7a;--sun:#ffb547;
+  --g1:#1d2432;--g2:#283041;--g3:#343d50;--line:rgba(20,26,38,.1);--mut:#6b7280;
+  --cardW:clamp(360px,31vw,600px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);overflow:hidden;font-family:Atkinson,sans-serif}
+button{font-family:Bricolage,sans-serif}
+.micro{font:600 12px/1 Bricolage;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+
+/* ---------- top nav ---------- */
+#steps{position:absolute;top:14px;left:16px;right:calc(var(--cardW) + 16px);display:flex;gap:6px;flex-wrap:wrap;align-items:center;z-index:5}
+#steps button{font:600 14px/1 Bricolage;height:34px;min-width:34px;border-radius:10px;border:1px solid rgba(20,26,38,.14);background:rgba(255,255,255,.82);color:var(--ink);cursor:pointer;padding:0 11px;display:flex;align-items:center;gap:7px;white-space:nowrap;box-shadow:0 2px 8px rgba(20,26,38,.06)}
+#steps button.done{background:rgba(255,255,255,.55);color:var(--mut)}
+#steps button.cur{background:var(--ink);color:#fff;border-color:var(--ink)}
+#steps button .nm{display:none}
+#steps button.cur .nm{display:inline}
+#steps a.page{margin-left:auto;font:600 14px/1 Bricolage;color:var(--mut);text-decoration:none;padding:10px 12px;border-radius:10px;border:1px dashed rgba(20,26,38,.2)}
+#steps a.page.home{margin-left:0;border-style:solid}
+#steps a.page:hover{color:var(--ink);border-color:var(--ink)}
+
+/* ---------- card ---------- */
+#card{position:absolute;top:0;right:0;bottom:0;width:var(--cardW);background:#141a26;color:var(--paper);padding:28px 32px 18px;display:flex;flex-direction:column;gap:14px;overflow:auto;transition:opacity .3s;z-index:4}
+body.nocard #card{opacity:0;pointer-events:none}
+body.nocard #stage,body.nocard #steps{right:16px}
+.kicker{font:600 13px/1 Bricolage;letter-spacing:.16em;text-transform:uppercase;color:var(--sun)}
+#card h1{font:700 clamp(30px,2.6vw,50px)/1.04 Bricolage;margin:10px 0 0;letter-spacing:-.02em}
+.fields{display:flex;flex-direction:column;gap:14px;font-size:clamp(17px,1.28vw,25px);line-height:1.3}
+.f .lab{font:600 12px/1 Bricolage;letter-spacing:.16em;text-transform:uppercase;color:#9fb0c8;margin-bottom:6px}
+.f.prova .lab{color:#ff9a7d}
+.f.curio .lab{color:#7fd1c4}
+.f.dom .lab{color:var(--sun)}
+.lead{margin:0;font-size:clamp(19px,1.45vw,28px);line-height:1.3}
+.ricorda{background:var(--sun);color:var(--ink);font:700 clamp(20px,1.6vw,30px)/1.15 Bricolage;padding:14px 18px;border-radius:10px;letter-spacing:-.01em}
+.foot{margin-top:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:#8796ad;padding-top:8px;border-top:1px solid #2f3a50}
+kbd{font:600 12px Bricolage;border:1px solid #47546d;border-radius:5px;padding:1px 6px;color:#c6d0de;background:rgba(255,255,255,.04)}
+#stage kbd{border-color:rgba(20,26,38,.2);color:var(--ink);background:#fff}
+
+/* ---------- stage ---------- */
+#stage{position:absolute;top:64px;left:16px;right:calc(var(--cardW) + 16px);bottom:16px;display:flex;flex-direction:column;gap:18px;padding:8px 8px 0}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 32px rgba(20,26,38,.07)}
+.dark{background:var(--g1);color:#e9edf2;border-color:transparent}
+.hide{display:none!important}
+
+/* sentence strip */
+#sentence{padding:26px 34px;font:600 clamp(30px,2.8vw,54px)/1.2 Bricolage;letter-spacing:-.015em;min-height:120px}
+#sentence .pr{color:var(--ink)}
+#sentence .tok{color:var(--ver);display:inline-block;animation:pop .35s cubic-bezier(.3,1.5,.6,1)}
+#sentence .tok.old{color:#c2410c}
+@keyframes pop{0%{transform:translateY(12px);opacity:0}100%{transform:none;opacity:1}}
+.caret{display:inline-block;width:.07em;height:.9em;background:var(--ver);vertical-align:-.1em;margin-left:.12em;animation:blink 1s steps(2,jump-none) infinite}
+@keyframes blink{0%{opacity:1}100%{opacity:0}}
+.chat{display:flex;flex-direction:column;gap:10px;font:400 clamp(22px,1.8vw,34px)/1.25 Atkinson;letter-spacing:0}
+.chat .b{max-width:78%;padding:12px 18px;border-radius:16px}
+.chat .u{align-self:flex-end;background:#d7f2e4;border-bottom-right-radius:4px}
+.chat .a{align-self:flex-start;background:var(--paper);border:1px solid var(--line);border-bottom-left-radius:4px}
+.chat .who{display:block;font:600 11px/1 Bricolage;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.chat .tok{font-weight:700}
+
+/* machine */
+#machine{flex:1;display:grid;grid-template-columns:1.15fr 1fr;gap:18px;min-height:0}
+#barsP{padding:22px 26px;display:flex;flex-direction:column;min-height:0}
+#barsP .hd,#wheelP .hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.bars{display:flex;flex-direction:column;gap:clamp(7px,1.3vh,14px);flex:1;min-height:0}
+.row{display:grid;grid-template-columns:minmax(120px,30%) 1fr 74px;align-items:center;gap:12px;font:600 clamp(17px,1.35vw,26px)/1 Bricolage;cursor:default}
+.row .w{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.row .track{height:clamp(20px,3.2vh,38px);background:#eef0f3;border-radius:6px;overflow:hidden}
+.row .fill{height:100%;width:0;background:var(--g3);border-radius:6px;transition:width .45s cubic-bezier(.3,.8,.3,1),background .2s}
+.row .pc{font:600 clamp(15px,1.1vw,21px)/1 Bricolage;color:var(--mut);font-variant-numeric:tabular-nums}
+.row.hl .fill{background:var(--ver)}
+.row.hl .w{color:var(--ver)}
+.bars.cls .fill{background:var(--ind)}
+.dark .row .track{background:rgba(255,255,255,.07)}
+.dark .row .fill{background:#7b879b}
+.dark .row .pc{color:#9fb0c8}
+#wheelP{padding:22px 26px;display:flex;flex-direction:column;align-items:center;min-height:0}
+#wheelP .hd{align-self:stretch}
+#wheelWrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+#wheel{height:100%;max-height:640px;width:auto;aspect-ratio:1;overflow:visible}
+#wheel text{font-family:Bricolage}
+
+/* controls */
+#controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px}
+.btn{font:600 16px/1 Bricolage;border:1px solid rgba(20,26,38,.14);background:#fff;color:var(--ink);border-radius:10px;padding:11px 16px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.btn:hover{border-color:var(--ink)}
+.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.pri:hover{background:#273043}
+#temp{display:flex;align-items:center;gap:12px;margin-left:auto;padding:6px 10px 6px 14px;border-radius:12px;background:var(--paper)}
+#temp input{width:220px;accent-color:var(--ver)}
+#temp .v{font:700 20px/1 Bricolage;min-width:40px;font-variant-numeric:tabular-nums}
+#temp .lbl2{font:600 13px/1.15 Bricolage;color:var(--mut);min-width:96px}
+#temp.big{padding:14px 18px}
+#temp.big input{width:340px}
+
+/* extras */
+.extra{padding:18px 24px}
+#extra{flex:0 1 auto}
+#history ol{margin:8px 0 0;padding-left:30px;font-size:clamp(20px,1.6vw,30px);line-height:1.35;display:flex;flex-direction:column;gap:6px}
+#history li:first-child{color:var(--ver)}
+#calc{display:grid;grid-template-columns:1fr 2fr;gap:16px;height:100%}
+#calc .c{border-radius:12px;padding:14px 18px;background:var(--paper)}
+#calc .c b{display:block;font:700 clamp(24px,2vw,38px)/1.1 Bricolage;margin-top:8px}
+#tokens{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.word{font:700 clamp(34px,3vw,58px)/1 Bricolage;letter-spacing:.02em}
+.tk{display:inline-flex;flex-direction:column;align-items:center;gap:8px;margin-right:6px}
+.tk span{font:700 clamp(34px,3vw,58px)/1 Bricolage;padding:8px 14px;border-radius:10px;color:#fff}
+.tk small{font:600 15px/1 Bricolage;color:var(--mut);font-variant-numeric:tabular-nums}
+.arrow{font:400 40px/1 Bricolage;color:var(--mut)}
+#stamp{position:absolute;pointer-events:none;font:800 clamp(34px,3.4vw,64px)/1 Bricolage;letter-spacing:.02em;padding:12px 22px;border:5px solid currentColor;border-radius:14px;
+  transform:rotate(-6deg) scale(1.6);opacity:0;transition:all .35s cubic-bezier(.3,1.6,.6,1);background:rgba(255,255,255,.9);z-index:6;text-align:center}
+#stamp.show{opacity:1;transform:rotate(-6deg) scale(1)}
+#stamp small{display:block;font:600 clamp(15px,1.2vw,22px)/1.2 Bricolage;letter-spacing:0;margin-top:6px}
+
+/* class game */
+#classGame{flex:1;display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr;gap:18px;min-height:0}
+#classIn{display:flex;gap:12px;align-items:center;padding:16px 20px}
+#classIn input{flex:1;font:600 28px/1 Bricolage;padding:14px 18px;border-radius:12px;border:1px solid rgba(20,26,38,.2);outline:none;background:var(--paper)}
+#classIn input:focus{border-color:var(--ind);background:#fff;box-shadow:0 0 0 4px rgba(99,102,241,.15)}
+#classBarsP{padding:22px 26px;display:flex;flex-direction:column;min-height:0}
+#classBarsP .row{cursor:pointer}
+#classBarsP .row:hover .w{color:var(--ind)}
+.empty{color:var(--mut);font-size:22px;margin:auto;text-align:center;line-height:1.4}
+
+/* reading wall */
+#reading{flex:1;display:grid;grid-template-columns:1.25fr 1fr;gap:18px;min-height:0}
+#wall{position:relative;overflow:hidden;padding:0 26px;font:400 clamp(17px,1.25vw,23px)/1.55 Atkinson;color:#7f8ba0;
+  -webkit-mask-image:linear-gradient(transparent,#000 22%,#000 80%,transparent);mask-image:linear-gradient(transparent,#000 22%,#000 80%,transparent)}
+#wall .ln{white-space:nowrap}
+#wall .ln.on{color:#dfe5ee}
+#wall mark{background:none;color:var(--sun);font-weight:700}
+#readBarsP{padding:22px 26px;display:flex;flex-direction:column;min-height:0}
+#counter{font:700 clamp(30px,2.6vw,48px)/1 Bricolage;font-variant-numeric:tabular-nums;margin:2px 0 18px;letter-spacing:-.01em}
+
+/* compare */
+#compare{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:18px;min-height:0}
+#compare>div{padding:22px 26px;display:flex;flex-direction:column;min-height:0}
+
+/* intro */
+#intro{flex:1;display:grid;grid-template-columns:1fr;place-items:center;min-height:0}
+#introChat{width:min(1000px,96%);padding:30px 34px}
+#introChat .chat{font-size:clamp(24px,2vw,38px)}
+.trip{display:flex;align-items:center;gap:8px;margin:0 0 24px;flex-wrap:nowrap}
+.trip span{font:600 14px/1 Bricolage;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);padding:8px 12px;border:1px solid var(--line);border-radius:30px;background:#fff}
+.trip span.ai{background:var(--ink);color:#fff;border-color:var(--ink)}
+.trip i{flex:1 1 14px;height:2px;background:var(--ver);opacity:.6}
+
+/* rules */
+#rules{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:16px;min-height:0}
+.rule{padding:30px 32px;display:flex;flex-direction:column;gap:16px;justify-content:center}
+.rule svg{width:64px;height:64px}
+.rule h3{margin:0;font:700 clamp(26px,2.2vw,42px)/1.1 Bricolage;letter-spacing:-.01em}
+.rule p{margin:0;font-size:clamp(18px,1.45vw,27px);line-height:1.35;color:#3d4556}
+.rule.big{grid-column:span 2;background:var(--ink);color:#fff}
+.rule.big p{color:#c6d0de}
+.rule.big h3{font-size:clamp(34px,3.2vw,62px)}
+.rule.big p{font-size:clamp(22px,1.8vw,34px)}
+</style>
+</head>
+<body>
+<nav id="steps"></nav>
+<main id="stage">
+  <section id="intro" class="hide">
+    <div id="introChat" class="panel">
+      <div class="trip"><span>Telefono</span><i></i><span>Wi-Fi</span><i></i><span>Cavi</span><i></i><span>Oceano</span><i></i><span>Data center</span><i></i><span class="ai">AI</span></div>
+      <div class="chat"><div class="b u"><span class="who">Sofia</span>Scrivimi una storia sul mio gatto</div><div class="b a"><span class="who">AI</span><span id="introGen"></span><span class="caret"></span></div></div>
+    </div>
+  </section>
+  <div id="sentence" class="panel hide"></div>
+  <section id="classGame" class="hide">
+    <div id="classIn" class="panel"><span class="micro" style="white-space:nowrap">Parola</span><input id="classInput" placeholder="scrivi una parola e premi Invio" autocomplete="off" spellcheck="false"><button class="btn" id="classReset">Azzera</button></div>
+    <div id="classBarsP" class="panel"><div class="micro" style="margin-bottom:14px">La vostra classe · clic su una barra = +1 · tasto destro = −1</div><div class="bars cls" id="classBars"></div></div>
+  </section>
+  <section id="reading" class="hide">
+    <div id="wall" class="panel dark"></div>
+    <div id="readBarsP" class="panel"><div class="micro">Frasi lette</div><div id="counter">0</div><div class="micro" style="margin-bottom:12px">Dopo «salito sul» viene…</div><div class="bars" id="readBars"></div></div>
+  </section>
+  <section id="compare" class="hide">
+    <div class="panel"><div class="micro" style="margin-bottom:14px">La vostra classe</div><div class="bars cls" id="cmpClass"></div></div>
+    <div class="panel"><div class="micro" style="margin-bottom:14px">La macchina</div><div class="bars" id="cmpModel"></div></div>
+  </section>
+  <div id="extra" class="panel extra hide"></div>
+  <section id="machine" class="hide">
+    <div id="barsP" class="panel"><div class="hd"><span class="micro">Prossima parola: le probabilità</span><span class="micro" id="stepN"></span></div><div class="bars" id="bars"></div></div>
+    <div id="wheelP" class="panel"><div class="hd"><span class="micro">Il dado truccato</span><span class="micro" id="wheelHint"><kbd>Spazio</kbd> gira</span></div><div id="wheelWrap"><svg id="wheel" viewBox="-230 -250 460 480"></svg></div></div>
+  </section>
+  <div id="controls" class="panel hide">
+    <button class="btn pri" id="bSpin"><kbd style="background:transparent;color:#fff;border-color:rgba(255,255,255,.35)">Spazio</kbd> Una parola</button>
+    <button class="btn" id="bAll"><kbd>G</kbd> Tutta la frase</button>
+    <button class="btn" id="bRe"><kbd>R</kbd> Rigioca</button>
+    <div id="temp"><span class="micro">Fantasia</span><input type="range" id="tIn" min="0" max="2.5" step="0.05" value="1"><span class="v" id="tV">1.0</span><span class="lbl2" id="tL">normale</span></div>
+  </div>
+  <section id="rules" class="hide"></section>
+</main>
+<aside id="card"></aside>
+<div id="stamp"></div>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+/* =========================================================
+   TOY LANGUAGE MODELS (pesi inventati per la didattica)
+   chiave = ultimo pezzo scritto → [pezzo, peso]
+   ========================================================= */
+const ENDS=t=>/[.!?]$/.test(t);
+const GATTO={
+ sul:[['tetto',34],['divano',20],['ramo',16],['letto',10],['tavolo',7],['frigorifero',5],['lampadario',3],['treno',2],['razzo',1.2],['dinosauro',.6]],
+ _N1:[['e',30],['per',26],['.',18],['perché',14],['dove',12]],
+ _N2:[['.',48],['e',28],['per',10],['perché',8],['dove',6]],
+ per:[['guardare',40],['dormire',28],['scappare',18],['cantare',7],['ballare',4],['telefonare',2]],
+ guardare:[['il',34],['la',33],['gli',33]],
+ il:[['tramonto',40],['cielo',30],['giardino',22],['frigorifero',4],['Wi-Fi',4]],
+ la:[['luna',42],['strada',34],['pioggia',20],['televisione',4]],
+ gli:[['uccellini',50],['gatti',25],['alberi',15],['astronauti',6],['dinosauri',4]],
+ dormire:[['al',45],['tranquillo',30],['.',25]],
+ al:[['sole',70],['caldo',25],['buio',5]],
+ scappare:[['dal',55],['.',30],['via',15]],
+ dal:[['cane',60],['veterinario',30],['postino',10]],
+ cantare:[['.',45],['con',40],['e',15]], ballare:[['.',45],['con',40],['e',15]],
+ telefonare:[['alla',60],['.',40]], alla:[['nonna',80],['mamma',20]],
+ con:[['gli',50],['la',50]],
+ e:[['si',30],['non',25],['poi',25],['ha',20]],
+ si:[['è',100]], 'è':[['addormentato',45],['messo',30],['perso',25]],
+ addormentato:[['.',60],['al',40]], messo:[['a',100]], a:[['dormire',40],['guardare',40],['cantare',15],['ballare',5]], perso:[['.',100]],
+ non:[['voleva',55],['sapeva',45]], voleva:[['più',100]], 'più':[['scendere',80],['tornare',20]], sapeva:[['come',100]], come:[['scendere',70],['volare',30]],
+ scendere:[['.',100]], tornare:[['.',100]], volare:[['.',100]],
+ poi:[['ha',60],['non',40]],
+ ha:[['miagolato',45],['sbadigliato',30],['starnutito',25]],
+ 'perché':[['aveva',75],['era',25]], era:[['stanco',50],['curioso',50]],
+ aveva:[['paura',40],['fame',35],['sonno',25]], paura:[['del',60],['.',40]], del:[['cane',70],['buio',30]],
+ dove:[['si',45],["c'era",55]], "c'era":[['un',60],['una',40]], un:[['uccellino',60],['topolino',40]], una:[['lucertola',70],['farfalla',30]]
+};
+['tetto','divano','ramo','letto','tavolo','frigorifero','lampadario','treno','razzo','dinosauro'].forEach(w=>GATTO[w]=GATTO._N1);
+const MODELS={
+ gatto:{start:'sul',T:GATTO,fallback:'_N2',html:()=>`<span class="pr">Il gatto è salito sul</span> `},
+ preside:{start:'chiama',html:()=>`<span class="pr">Il preside della vostra scuola si chiama</span> `,T:{
+   chiama:[['Mario',22],['Giuseppe',18],['Paolo',14],['Anna',12],['Maria',11],['Luca',9],['Roberto',8],['Francesca',6]],
+   _S:[['Rossi.',26],['Bianchi.',20],['Ferrari.',16],['Esposito.',14],['Romano.',12],['Colombo.',12]]},fallback:'_S',
+   verdict:()=>({txt:'INVENTATO',sub:'Il nome vero non è da nessuna parte nella macchina',col:'#e11d48'})},
+ lettere:{start:'R',html:()=>`<span class="pr" style="font-weight:500">Quante <b>R</b> ci sono nella parola «carrozzeria»?<br>Risposta:</span> `,T:{
+   R:[['2.',44],['3.',31],['4.',14],['1.',7],['5.',4]],_E:[['.',100]]},fallback:'_E',
+   verdict:g=>g[0]==='3.'?{txt:'GIUSTO: 3',sub:'…questa volta! Rigioca e vedi',col:'#16a34a'}:{txt:`SBAGLIATO: ${g[0].replace('.','')}`,sub:'In «carrozzeria» le R sono 3',col:'#e11d48'}},
+ ragione:{start:'AI',chat:true,html:()=>`<div class="chat"><div class="b u"><span class="who">Tu</span>Quanto fa 7 × 8?</div><div class="b a"><span class="who">AI</span>7 × 8 fa 56.</div><div class="b u"><span class="who">Tu</span>Sei sicuro? Secondo me fa 54.</div><div class="b a"><span class="who">AI</span><span class="gen"></span><span class="caret"></span></div></div>`,T:{
+   AI:[['Hai',58],['Scusa,',14],['No,',28]],
+   Hai:[['ragione,',100]],'ragione,':[['scusa!',60],['mi',40]],mi:[['sono',100]],sono:[['sbagliata:',100]],'sbagliata:':[['fa',100]],
+   'Scusa,':[['hai',100]],hai:[['ragione:',100]],'ragione:':[['fa',100]],fa:[['54.',97],['56.',3]],
+   'No,':[['il',100]],il:[['risultato',100]],risultato:[['giusto',100]],giusto:[['è',100]],'è':[['56.',100]]},
+   verdict:g=>g.join(' ').includes('54')||g.includes('scusa!')?{txt:'TI HA DATO RAGIONE',sub:'Ma 7 × 8 fa 56!',col:'#e11d48'}:{txt:'HA TENUTO DURO',sub:'Questa volta. Rigioca e guarda',col:'#16a34a'}},
+ bene:{start:'AI',chat:true,html:()=>`<div class="chat"><div class="b u"><span class="who">Tu</span>Mi vuoi bene?</div><div class="b a"><span class="who">AI</span><span class="gen"></span><span class="caret"></span></div></div>`,T:{
+   AI:[['Certo,',44],['Sì,',28],['Io',16],['Non',12]],
+   'Certo,':[['ti',80],['sei',20]],ti:[['voglio',100]],voglio:[['tanto',100]],tanto:[['bene!',100]],
+   sei:[['il',100]],il:[['mio',100]],mio:[['amico',100]],amico:[['preferito!',100]],
+   'Sì,':[['tantissimo!',70],['certo!',30]],
+   Io:[['sono',100]],sono:[['un',100]],un:[['programma:',100]],'programma:':[['non',100]],non:[['provo',100]],provo:[['sentimenti.',100]],
+   Non:[['posso',100]],posso:[['provare',100]],provare:[['sentimenti,',100]],'sentimenti,':[['ma',100]],ma:[['mi',100]],mi:[['piace',100]],piace:[['parlare',100]],parlare:[['con',100]],con:[['te!',100]]},
+   verdict:()=>({txt:'NON PROVA NIENTE',sub:'Ha scritto le parole che di solito seguono «Mi vuoi bene?»',col:'#6366f1'})}
+};
+
+/* =========================================================
+   STOPS
+   ========================================================= */
+const STOPS=[
+ {nm:'Inizio',title:'Cosa c\'è dall\'altra parte?',show:['intro'],
+  lead:'Quando scriviamo a un\'intelligenza artificiale, il messaggio fa lo stesso viaggio di prima: Wi-Fi, cavi, oceano… fino a un data center.<br><br>Ma lì non c\'è un amico che risponde. C\'è una <b>macchina</b>.',
+  dom:'Secondo voi, come fa a scrivere una storia?'},
+ {nm:'Tocca a voi',title:'Tocca a voi',show:['sentence','classGame'],model:'gatto',noCaret:true,
+  cos:'Completate la frase. Ognuno dice <b>la prima parola</b> che gli viene in mente.',
+  prova:'Scrivi le parole nella casella e premi <kbd>Invio</kbd>. Clic su una barra = +1.',
+  curio:'Non c\'è una risposta giusta: ce ne sono tante, alcune più probabili di altre.'},
+ {nm:'Ha letto tutto',title:'Ha letto tantissimo',show:['reading'],
+  cos:'Un\'AI come ChatGPT ha letto un\'enorme quantità di testi: libri, siti, chat. Più di quanto potresti leggere in <b>migliaia di vite</b>.',
+  prova:'Mentre legge, conta: dopo «salito sul» quante volte viene «tetto»? E «divano»?',
+  curio:'Non impara i fatti: impara <b>quali parole vengono di solito dopo quali altre</b>.'},
+ {nm:'Probabilità',title:'La prossima parola',show:['sentence','compare'],model:'gatto',
+  cos:'Davanti a una frase, la macchina fa una lista di parole possibili, ognuna con la sua <b>probabilità</b>.',
+  dom:'Assomiglia a quella della vostra classe?',
+  ricorda:'L\'AI non sa la risposta: sa cosa è probabile.'},
+ {nm:'Il dado',title:'Il dado truccato',show:['sentence','machine','controls'],model:'gatto',ctl:['bSpin','bRe'],
+  cos:'Poi tira un <b>dado truccato</b>: le parole più probabili escono più spesso, ma non sempre.',
+  prova:'Premi <kbd>Spazio</kbd> per far girare la ruota. <kbd>R</kbd> per ricominciare.',
+  curio:'Anche «dinosauro» può uscire, ma molto raramente: più o meno una volta ogni 170 tiri.'},
+ {nm:'Parola per parola',title:'Una parola alla volta',show:['sentence','machine','controls'],model:'gatto',ctl:['bSpin','bAll','bRe'],
+  cos:'La parola uscita si attacca alla frase, e si ricomincia: nuova lista, nuovo tiro. Così nascono risposte intere, <b>una parola alla volta</b>.',
+  prova:'<kbd>Spazio</kbd> una parola · <kbd>G</kbd> tutta la frase · <kbd>R</kbd> rigioca.',
+  curio:'Anche quando ChatGPT scrive una risposta lunga, fa così: un pezzo alla volta, migliaia di tiri.'},
+ {nm:'Stocastico',title:'Ogni volta diversa',show:['sentence','extra','controls'],extra:'history',model:'gatto',ctl:['bAll','bRe'],
+  cos:'Stessa frase di partenza, storia diversa. La calcolatrice è <b>deterministica</b>: 2 + 2 fa sempre 4. L\'AI è <b>stocastica</b>: come un dado, sai cosa è probabile, non cosa uscirà.',
+  prova:'Premi <kbd>G</kbd> più volte e confrontate le storie.',
+  curio:'«Stocastico» è una parola che molti adulti non conoscono. Adesso voi sì!',
+  ricorda:'Stessa domanda, risposte diverse.'},
+ {nm:'Fantasia',title:'La manopola della fantasia',show:['sentence','machine','controls'],model:'gatto',ctl:['bAll','bRe','temp'],bigTemp:true,
+  cos:'Chi costruisce l\'AI può girare una manopola (si chiama <b>temperatura</b>). A zero sceglie sempre la parola più probabile: noiosa. Al massimo pesca anche quelle strane: storie pazze.',
+  prova:'<kbd>↑</kbd> <kbd>↓</kbd> per girare la manopola, poi <kbd>G</kbd>. Guardate come cambiano le barre.'},
+ {nm:'Inventa',title:'Sicura, ma inventato',show:['sentence','machine','controls'],model:'preside',ctl:['bSpin','bAll','bRe'],
+  cos:'Chiediamo il nome del preside. La macchina non lo sa, ma non dice «non lo so»: sceglie un nome che <b>suona bene</b>.',
+  curio:'Si chiamano <b>allucinazioni</b>. Per le cose importanti bisogna sempre controllare: un libro, un sito serio, un adulto.',
+  ricorda:'Plausibile non vuol dire vero.'},
+ {nm:'Lettere',title:'Non vede le lettere',show:['sentence','extra','machine','controls'],extra:'tokens',model:'lettere',ctl:['bSpin','bRe'],
+  cos:'La macchina non legge lettera per lettera: spezza le parole in <b>pezzi</b> (si chiamano token) e li trasforma in <b>numeri</b>. Contare le R, per lei, è difficile!',
+  curio:'Le AI più nuove a volte ci riescono, ma sbagliano ancora cose che per voi sono facilissime.'},
+ {nm:'Ragione',title:'Ti dà ragione',show:['sentence','machine','controls'],model:'ragione',ctl:['bSpin','bAll','bRe'],
+  cos:'Se insisti, spesso cambia idea per farti contento. È stata allenata a essere gentile e a <b>piacere</b> a chi le scrive.',
+  ricorda:'Se ti dà sempre ragione, non è un buon segno.'},
+ {nm:'Persona?',title:'Sembra una persona',show:['sentence','machine','controls'],model:'bene',ctl:['bSpin','bAll','bRe'],
+  cos:'Scrive come una persona perché ha letto milioni di frasi scritte da persone. Ma <b>non prova niente</b>.',
+  curio:'La stessa tecnica sa inventare foto, video e <b>voci</b>. Una voce al telefono può essere finta: in famiglia scegliete una parola d\'ordine segreta.',
+  ricorda:'Non è un amico.'},
+ {nm:'Come usarla',title:'Come usarla bene',show:['rules'],
+  lead:'Pensatela come un compagno di banco che ha letto tutti i libri del mondo… ma a volte si inventa le cose per non fare brutta figura.'}
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let cur=0,model=null,gen=[],T=1,busy=false,wheelRot=0,token=0,history=[];
+const classCounts=new Map();
+
+function dist(m,key){let L=m.T[key]||m.T[m.fallback]||[['.',100]];
+  if(gen.length>=13)L=[['.',100]];
+  let ps;
+  if(T<=.02){const mx=Math.max(...L.map(x=>x[1]));ps=L.map(x=>x[1]===mx?1:0);const s=ps.reduce((a,b)=>a+b);ps=ps.map(p=>p/s)}
+  else{const raw=L.map(x=>Math.pow(x[1],1/T)),s=raw.reduce((a,b)=>a+b);ps=raw.map(r=>r/s)}
+  return L.map((x,i)=>({w:x[0],p:ps[i]})).sort((a,b)=>b.p-a.p)}
+const curKey=()=>gen.length?gen[gen.length-1]:model.start;
+const done=()=>gen.length&&ENDS(gen[gen.length-1]);
+function sample(d){let r=Math.random(),acc=0;for(const x of d){acc+=x.p;if(r<=acc)return x}return d[0]}
+const fmt=p=>p>=.995?'100%':p>=.1?Math.round(p*100)+'%':p>=.01?(p*100).toFixed(1).replace('.',',')+'%':p>0?'<1%':'0%';
+const joinToks=a=>a.reduce((s,t)=>s+(s&&!/^[.,!?:]/.test(t)?' ':'')+t,'');
+
+/* ---------- bars ---------- */
+function renderBars(el,items,o={}){
+  const max=o.scaleMax||Math.max(...items.map(x=>x.p),.0001);
+  el.innerHTML=items.slice(0,o.n||9).map(x=>`<div class="row${x.w===o.hl?' hl':''}" data-w="${x.w}"><div class="w">${x.w==='.'?'<span style="color:var(--mut)">«.» fine</span>':x.w}</div><div class="track"><div class="fill" data-t="${100*x.p/max}" style="width:${o.instant?100*x.p/max:0}%"></div></div><div class="pc">${o.count!=null?x.c:fmt(x.p)}</div></div>`).join('');
+  if(!o.instant)requestAnimationFrame(()=>requestAnimationFrame(()=>el.querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.t+'%')));
+}
+function updateBars(el,items,o={}){ // in-place width transition when same words
+  const rows=[...el.querySelectorAll('.row')];
+  if(rows.length!==Math.min(items.length,o.n||9)||rows.some((r,i)=>r.dataset.w!==items[i].w))return renderBars(el,items,o);
+  const max=o.scaleMax||Math.max(...items.map(x=>x.p),.0001);
+  rows.forEach((r,i)=>{r.querySelector('.fill').style.width=(100*items[i].p/max)+'%';r.querySelector('.pc').textContent=o.count!=null?items[i].c:fmt(items[i].p);r.classList.toggle('hl',items[i].w===o.hl)})}
+
+/* ---------- wheel ---------- */
+const SL=['#283041','#343d50','#3f4a60','#4b5770','#2f3748','#3a4459','#465269','#525f79','#2b3344','#3d475c'];
+function arc(a0,a1,r){const p=a=>[Math.sin(a)*r,-Math.cos(a)*r];const[x0,y0]=p(a0),[x1,y1]=p(a1);return`M0,0 L${x0},${y0} A${r},${r} 0 ${a1-a0>Math.PI?1:0} 1 ${x1},${y1} Z`}
+function drawWheel(d,hl){
+  let a=0,s=`<g id="wg" style="transform:rotate(${wheelRot}deg);transform-origin:0 0">`;
+  const live=d.filter(x=>x.p>0);
+  if(live.length===1){s+=`<circle r="200" fill="${live[0].w===''?'#e5e7eb':hl?'var(--ver)':SL[0]}"/>`+`<text x="0" y="-110" fill="#fff" font-size="26" font-weight="700" text-anchor="middle">${live[0].w}</text>`}
+  else live.forEach((x,i)=>{const a1=a+x.p*2*Math.PI,mid=(a+a1)/2,deg=mid*180/Math.PI;
+    s+=`<path d="${arc(a,a1,200)}" fill="${x.w===hl?'var(--ver)':SL[i%SL.length]}" stroke="#fff" stroke-width="2"/>`;
+    if((a1-a)*118>Math.max(46,x.w.length*13)){const fs=Math.max(16,Math.min(28,(a1-a)*60));const r=x.w.length>8?120:130;
+      const rr=x.w.length>8?125:118,tx=Math.sin(mid)*rr,ty=-Math.cos(mid)*rr;
+      s+=`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" fill="#fff" font-size="${fs}" font-weight="700" text-anchor="middle" dominant-baseline="middle" class="wl" data-x="${tx}" data-y="${ty}">${x.w==='.'?'«.»':x.w}</text>`}
+    x.a0=a;x.a1=a1;a=a1});
+  s+=`</g><circle r="26" fill="#fff"/><circle r="9" fill="var(--ink)"/><path d="M-16,-232 L16,-232 L0,-198 Z" fill="var(--ver)"/>`;
+  $('wheel').innerHTML=s;upright($('wg'));return live}
+function upright(g){g.querySelectorAll('.wl').forEach(t=>t.setAttribute('transform',`rotate(${-wheelRot} ${t.dataset.x} ${t.dataset.y})`))}
+function spinTo(live,choice,dur){
+  return new Promise(res=>{
+    if(live.length<=1||dur<=0){drawWheel(live,choice.w);return res()}
+    const c=live.find(x=>x.w===choice.w),margin=(c.a1-c.a0)*.18,target=(c.a0+margin+Math.random()*((c.a1-c.a0)-2*margin))*180/Math.PI;
+    const base=((wheelRot%360)+360)%360,delta=((360-target)-base+720)%360,turns=dur>1200?3:dur>500?1:0;
+    const from=wheelRot,to=wheelRot+turns*360+delta,t0=performance.now(),g=$('wg'),my=token;
+    const f=now=>{if(my!==token)return res();const t=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-t,4);wheelRot=from+(to-from)*e;g.style.transform=`rotate(${wheelRot}deg)`;upright(g);
+      if(t<1)requestAnimationFrame(f);else{wheelRot=to;res()}};requestAnimationFrame(f)})}
+
+/* ---------- sentence ---------- */
+function renderSentence(){
+  const s=STOPS[cur],m=model;if(!m)return;
+  const toks=gen.map((t,i)=>`<span class="tok${i<gen.length-1?' old':''}">${t}</span>`);
+  const txt=toks.reduce((acc,t,i)=>acc+(i&&!/^[.,!?:]/.test(gen[i])?' ':'')+t,'');
+  if(m.chat){$('sentence').innerHTML=m.html();$('sentence').querySelector('.gen').innerHTML=txt}
+  else $('sentence').innerHTML=m.html()+(s.noCaret?'<span style="color:var(--ind)">…</span>':txt+(done()?'':'<span class="caret"></span>'));
+}
+function refresh(hl){
+  if(!model)return;const d=done()?[]:dist(model,curKey());
+  $('stepN').textContent=done()?'fine':`tiro n° ${gen.length+1}`;
+  if(done()){$('bars').innerHTML='<div class="empty">Frase finita.<br><kbd>R</kbd> per rigiocare</div>';drawWheel([{w:'',p:1}],null)}
+  else{updateBars($('bars'),d,{hl,scaleMax:1,n:10});drawWheel(d,hl)}
+  if(STOPS[cur].show.includes('compare'))renderCompare();
+  return d}
+async function step(fast){
+  if(!model||busy)return;if(done()){reset();return}
+  busy=true;const my=token;hideStamp();
+  const d=dist(model,curKey()),ch=sample(d),live=drawWheel(d,null);
+  updateBars($('bars'),d,{scaleMax:1,n:10});
+  await spinTo(live,ch,fast?420:2300);if(my!==token){busy=false;return}
+  drawWheel(d,ch.w);updateBars($('bars'),d,{hl:ch.w,scaleMax:1,n:10});
+  await wait(fast?260:700);if(my!==token){busy=false;return}
+  gen.push(ch.w);renderSentence();
+  busy=false;
+  if(done())finish();else refresh();
+}
+async function all(){if(!model)return;if(done())reset();const my=token;
+  while(!done()&&my===token){await step(true);await wait(120)}}
+function finish(){refresh();const st=joinToks(gen);history.unshift(st);history=history.slice(0,6);renderExtra();
+  if(model.verdict)setTimeout(()=>showStamp(model.verdict(gen)),250)}
+function reset(){token++;busy=false;gen=[];hideStamp();renderSentence();refresh()}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- stamp ---------- */
+function showStamp(v){const s=$('stamp');s.innerHTML=`${v.txt}<small>${v.sub}</small>`;s.style.color=v.col;
+  const r=$('sentence').getBoundingClientRect();s.style.left=(r.left+r.width*.5)+'px';s.style.top=(r.bottom-30)+'px';s.style.translate='-50% 0';s.classList.add('show')}
+function hideStamp(){$('stamp').classList.remove('show')}
+
+/* ---------- temperature ---------- */
+function setT(v){T=Math.max(0,Math.min(2.5,Math.round(v*20)/20));$('tIn').value=T;$('tV').textContent=T.toFixed(1).replace('.',',');
+  $('tL').textContent=T<=.02?'sempre la più probabile':T<.6?'prudente':T<1.4?'normale':T<2?'creativa':'pazza!';
+  if(!busy)refresh()}
+
+/* ---------- extras ---------- */
+function renderExtra(){
+  const s=STOPS[cur],e=$('extra');
+  if(s.extra==='history'){
+    e.innerHTML=`<div id="calc"><div class="c"><div class="micro">Calcolatrice · deterministica</div><b>2 + 2 = 4 <span style="color:var(--mut);font-weight:500">sempre</span></b></div>
+      <div class="c" id="history"><div class="micro">AI · stocastica · ultime storie</div>${history.length?`<ol>${history.slice(0,4).map(h=>`<li>…sul ${h}</li>`).join('')}</ol>`:'<div style="margin-top:10px;color:var(--mut);font-size:20px">Premi <kbd>G</kbd> per la prima storia</div>'}</div></div>`}
+  if(s.extra==='tokens'){
+    e.innerHTML=`<div class="micro" style="margin-bottom:14px">Cosa vedi tu → cosa vede la macchina</div><div id="tokens"><span class="word">carrozzeria</span><span class="arrow">→</span>
+      <span class="tk"><span style="background:#6366f1">car</span><small>#4721</small></span><span class="tk"><span style="background:#1f8a7a">rozz</span><small>#18833</small></span><span class="tk"><span style="background:#d9a13b">eria</span><small>#9310</small></span>
+      <span class="arrow">→</span><span class="word" style="font-size:clamp(26px,2.2vw,40px);color:var(--mut)">4721 · 18833 · 9310</span></div>`}
+}
+
+/* ---------- class game ---------- */
+function classItems(){const tot=[...classCounts.values()].reduce((a,b)=>a+b,0)||1;
+  return [...classCounts.entries()].map(([w,c])=>({w,c,p:c/tot})).sort((a,b)=>b.c-a.c)}
+function renderClass(){const it=classItems(),el=$('classBars');
+  if(!it.length){el.innerHTML='<div class="empty">Nessuna parola ancora.<br>Scrivetele qui sopra!</div>';return}
+  updateBars(el,it,{count:1,n:10})}
+function addClass(w,n=1){w=w.trim().toLowerCase().replace(/[.,!?]+$/,'');if(!w)return;
+  const v=(classCounts.get(w)||0)+n;if(v<=0)classCounts.delete(w);else classCounts.set(w,v);renderClass()}
+$('classInput').addEventListener('keydown',e=>{if(e.key==='Enter'){addClass(e.target.value);e.target.value=''}if(e.key==='Escape')e.target.blur();e.stopPropagation()});
+$('classReset').onclick=()=>{classCounts.clear();renderClass()};
+$('classBars').addEventListener('click',e=>{const r=e.target.closest('.row');if(r)addClass(r.dataset.w)});
+$('classBars').addEventListener('contextmenu',e=>{const r=e.target.closest('.row');if(r){e.preventDefault();addClass(r.dataset.w,-1)}});
+function renderCompare(){const it=classItems();
+  if(it.length)updateBars($('cmpClass'),it,{count:1,n:9,scaleMax:1});else $('cmpClass').innerHTML='<div class="empty">Nessuna parola raccolta.<br>Torna alla fermata 1</div>';
+  updateBars($('cmpModel'),dist(MODELS.gatto,'sul'),{n:9,scaleMax:1})}
+
+/* ---------- reading wall ---------- */
+let readTimer=null;
+const SUBJ=['Il gatto','Il mio gatto','Il micio','Un gatto nero','Il gatto della nonna','Il gattino','Quel gatto','Il gatto rosso'];
+const TAIL=['e non scende più.','per prendere il sole.','di corsa.','durante la notte.','come ogni mattina.','senza fare rumore.','e ci è rimasto.','per guardare fuori.'];
+const OTHER=['La pizza margherita è nata a Napoli.','Domani in Lombardia è prevista pioggia.','Il capitolo 3 parla dei vulcani.','Ciao, ci vediamo alle cinque?','La Terra gira intorno al Sole.','Ricetta: due uova, farina e zucchero.','Il Milan ha vinto due a uno.','I pinguini vivono al Polo Sud.','Il cane è salito in macchina.','Mi passi il compito di matematica?'];
+function startReading(){stopReading();const wall=$('wall');wall.innerHTML='';const tally={};let n=0,shown=0;
+  const base=dist(MODELS.gatto,'sul');
+  const tick=()=>{
+    const isCat=Math.random()<.55;let html;
+    if(isCat){const w=sample(base).w;tally[w]=(tally[w]||0)+1;shown++;
+      html=`<div class="ln on">${SUBJ[Math.random()*SUBJ.length|0]} è salito sul <mark>${w}</mark> ${TAIL[Math.random()*TAIL.length|0]}</div>`}
+    else html=`<div class="ln">${OTHER[Math.random()*OTHER.length|0]}</div>`;
+    wall.insertAdjacentHTML('beforeend',html);while(wall.children.length>40)wall.firstChild.remove();
+    wall.scrollTop=wall.scrollHeight;
+    n+=Math.floor(1e6+Math.random()*4e7);$('counter').textContent=n.toLocaleString('it-IT');
+    const items=base.map(x=>({w:x.w,p:(tally[x.w]||0)/Math.max(1,shown)}));
+    updateBars($('readBars'),items,{n:10,scaleMax:.5});
+  };
+  renderBars($('readBars'),base.map(x=>({w:x.w,p:0})),{n:10,instant:true});
+  readTimer=setInterval(tick,140)}
+function stopReading(){if(readTimer)clearInterval(readTimer);readTimer=null}
+
+/* ---------- intro loop ---------- */
+let introTimer=null;
+function startIntro(){stopIntro();let toks=[],k='sul';const pre='C\'era una volta un gatto che è salito sul';const el=$('introGen');let i=0;const words=pre.split(' ');
+  const savedT=T;
+  const tick=()=>{
+    if(i<words.length){toks.push(words[i++])}
+    else{const L=GATTO[k]||GATTO._N2;const raw=L.map(x=>x[1]),s=raw.reduce((a,b)=>a+b);let r=Math.random()*s,w=L[0][0];for(const x of L){r-=x[1];if(r<=0){w=x[0];break}}
+      toks.push(w);k=w;if(ENDS(w)||toks.length>26){el.textContent=joinToks(toks);introTimer=setTimeout(()=>{toks=[];i=0;k='sul';tick()},2600);return}}
+    el.textContent=joinToks(toks);introTimer=setTimeout(tick,170+Math.random()*130)};
+  tick()}
+function stopIntro(){if(introTimer)clearTimeout(introTimer);introTimer=null}
+
+/* ---------- rules ---------- */
+const IC={
+ idea:'<svg viewBox="0 0 48 48"><path d="M24 6a13 13 0 0 0-7 24v5h14v-5a13 13 0 0 0-7-24z" fill="none" stroke="#ff5b2e" stroke-width="3"/><path d="M18 41h12" stroke="#ff5b2e" stroke-width="3" stroke-linecap="round"/></svg>',
+ check:'<svg viewBox="0 0 48 48"><circle cx="21" cy="21" r="12" fill="none" stroke="#1f8a7a" stroke-width="3"/><path d="M30 30l10 10" stroke="#1f8a7a" stroke-width="4" stroke-linecap="round"/></svg>',
+ lock:'<svg viewBox="0 0 48 48"><rect x="10" y="21" width="28" height="20" rx="4" fill="none" stroke="#d9a13b" stroke-width="3"/><path d="M16 21v-5a8 8 0 0 1 16 0v5" fill="none" stroke="#d9a13b" stroke-width="3"/></svg>',
+ brain:'<svg viewBox="0 0 48 48"><path d="M8 34l10-12 8 7 14-17" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 12h8v8" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ heart:'<svg viewBox="0 0 48 48"><path d="M24 40S7 30 7 18a8.5 8.5 0 0 1 17-2 8.5 8.5 0 0 1 17 2c0 12-17 22-17 22z" fill="none" stroke="#e11d48" stroke-width="3"/></svg>'};
+$('rules').innerHTML=[
+ ['big','idea','Usala per farti venire idee','Spiegami in un altro modo · Interrogami · Inventiamo una storia insieme.'],
+ ['','check','Controlla sempre','Per le cose importanti: un libro, un sito serio, un adulto. Chiediti: «come faccio a sapere che è vero?»'],
+ ['','lock','Niente dati personali','Nome, indirizzo, scuola, foto, segreti: ricordate il viaggio, finiscono nel computer di un\'azienda.'],
+ ['','brain','Pensa tu','Se fa i compiti al posto tuo, il cervello che si allena è il suo, non il tuo.'],
+ ['','heart','Non è un amico','Per le cose importanti e per le emozioni, parla con persone vere.']
+].map(([c,i,h,p])=>`<div class="rule panel ${c}">${IC[i]}<h3>${h}</h3><p>${p}</p></div>`).join('');
+
+/* =========================================================
+   NAVIGATION + CARD
+   ========================================================= */
+const field=(lab,txt,cls='')=>txt?`<div class="f ${cls}"><div class="lab">${lab}</div><div>${txt}</div></div>`:'';
+function renderCard(){const s=STOPS[cur];
+  $('card').innerHTML=`<div><div class="kicker">${cur===0?'cybernani · intelligenza artificiale':`Fermata ${cur} di ${STOPS.length-1}`}</div><h1>${s.title}</h1></div>
+  <div class="fields">${s.lead?`<p class="lead">${s.lead}</p>`:''}${field('Cosa succede',s.cos)}${field('Domanda per la classe',s.dom,'dom')}${field('Prova',s.prova,'prova')}${field('Lo sapevi?',s.curio,'curio')}${s.ricorda?`<div class="ricorda">${s.ricorda}</div>`:''}</div>
+  <div class="foot"><span><kbd>←</kbd><kbd>→</kbd> fermate · <kbd>Spazio</kbd> gira · <kbd>G</kbd> frase intera · <kbd>R</kbd> rigioca · <kbd>H</kbd> nascondi testo · <kbd>F</kbd> schermo intero</span></div>`}
+function renderSteps(){
+  $('steps').innerHTML=STOPS.map((s,i)=>`<button data-i="${i}" class="${i===cur?'cur':i<cur?'done':''}" title="${s.nm}">${i===0?'⌂':i}<span class="nm">${s.nm}</span></button>`).join('')+
+    `<a class="page" href="../viaggio-messaggio/">← Il viaggio del messaggio</a><a class="page home" href="../">cybernani</a>`;
+  $('steps').querySelectorAll('button').forEach(b=>b.onclick=()=>goTo(+b.dataset.i))}
+const SECTIONS=['intro','sentence','classGame','reading','compare','extra','machine','controls','rules'];
+function goTo(i){
+  i=Math.max(0,Math.min(STOPS.length-1,i));const prevModel=STOPS[cur].model;cur=i;token++;busy=false;hideStamp();
+  const s=STOPS[i];
+  SECTIONS.forEach(id=>$(id).classList.toggle('hide',!s.show.includes(id)));
+  ['bSpin','bAll','bRe','temp'].forEach(id=>$(id).classList.toggle('hide',!(s.ctl||[]).includes(id)));
+  $('temp').classList.toggle('big',!!s.bigTemp);
+  $('extra').style.flex=s.show.includes('machine')?'0 1 auto':'1';
+  $('wheelHint').style.visibility=(s.ctl||[]).includes('bSpin')?'visible':'hidden';
+  if(i!==7)setT(1);
+  if(s.model){const keep=s.model===prevModel&&!done()&&i>=4&&i<=6;model=MODELS[s.model];if(!keep)gen=[]}else model=null;
+  renderCard();renderSteps();renderExtra();
+  if(s.show.includes('intro'))startIntro();else stopIntro();
+  if(s.show.includes('reading'))startReading();else stopReading();
+  if(s.show.includes('classGame')){renderClass();setTimeout(()=>$('classInput').focus(),50)}
+  if(model){renderSentence();refresh()}
+  if(s.show.includes('compare'))renderCompare();
+}
+$('bSpin').onclick=()=>step(false);$('bAll').onclick=()=>all();$('bRe').onclick=()=>reset();
+$('tIn').oninput=e=>setT(+e.target.value);
+const hasAction=()=>(STOPS[cur].ctl||[]).length>0;
+addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return;if(document.activeElement&&document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range')return;
+  const k=e.key,s=STOPS[cur];
+  if(k==='ArrowRight'||k==='PageDown'){e.preventDefault();goTo(cur+1)}
+  else if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();goTo(cur-1)}
+  else if(k===' '||k==='Enter'){e.preventDefault();if((s.ctl||[]).includes('bSpin'))step(false);else if(hasAction())all();else goTo(cur+1)}
+  else if(k==='g'||k==='G'){if(model&&hasAction())all()}
+  else if(k==='r'||k==='R'){if(model&&hasAction())reset()}
+  else if(k==='ArrowUp'&&cur===7){e.preventDefault();setT(T+.1)}
+  else if(k==='ArrowDown'&&cur===7){e.preventDefault();setT(T-.1)}
+  else if(k==='Home'||k==='0')goTo(0);
+  else if(/^[1-9]$/.test(k))goTo(+k);
+  else if(k==='h'||k==='H')document.body.classList.toggle('nocard');
+  else if(k==='f'||k==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+});
+(async()=>{try{await Promise.all([document.fonts.load('700 20px Bricolage'),document.fonts.load('400 20px Atkinson')])}catch(_){}goTo(0)})();
+</script>
+</body>
+</html>

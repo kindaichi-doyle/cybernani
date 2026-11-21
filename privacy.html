@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Privacy · cybernani</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:"Bricolage";src:url(fonts/BricolageGrotesque.ttf) format("truetype");font-weight:200 800;font-display:swap}
+@font-face{font-family:"Atkinson";src:url(fonts/AtkinsonHyperlegible-Regular.ttf) format("truetype");font-weight:400;font-display:swap}
+@font-face{font-family:"Atkinson";src:url(fonts/AtkinsonHyperlegible-Bold.ttf) format("truetype");font-weight:700;font-display:swap}
+:root{--ink:#141a26;--paper:#f1f2f4;--mut:#5d6675;--line:rgba(20,26,38,.1)}
+*{box-sizing:border-box}
+html{background:var(--paper)}
+body{margin:0;color:var(--ink);font:400 18px/1.6 Atkinson,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 28px}
+header{padding:28px 0 0}
+.mark{display:inline-flex;align-items:center;gap:12px;font:700 22px/1 Bricolage,sans-serif;letter-spacing:-.01em;text-decoration:none;color:inherit}
+.mark svg{width:34px;height:34px}
+h1{font:700 clamp(36px,5vw,56px)/1 Bricolage,sans-serif;letter-spacing:-.03em;margin:64px 0 10px}
+.upd{font:600 12px/1 Bricolage,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:0 0 36px}
+h2{font:700 21px/1.25 Bricolage,sans-serif;letter-spacing:-.01em;margin:34px 0 8px}
+p{margin:0 0 12px;color:#30384a}
+a{color:var(--ink)}
+footer{border-top:1px solid var(--line);margin-top:64px;padding:26px 0 34px;font-size:14px;color:var(--mut)}
+footer a{color:var(--mut);text-decoration:none}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <a class="mark" href="./" aria-label="cybernani, home">
+    <svg viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="9" fill="#141a26"/><path d="M8 22 C13 22 13 12 17 12 S21 22 26 22" fill="none" stroke="#ff5b2e" stroke-width="3" stroke-linecap="round"/><circle cx="26" cy="22" r="3" fill="#ffb547"/></svg>
+    cybernani
+  </a>
+</header>
+<main class="wrap">
+  <h1>Informativa privacy</h1>
+  <p class="upd">Ultimo aggiornamento: novembre 2026</p>
+
+  <h2>Dati raccolti</h2>
+  <p>Questo sito non raccoglie, non memorizza e non condivide dati personali. Non utilizza cookie, strumenti di analisi o profilazione, né altre tecnologie di tracciamento. Non sono presenti moduli o registrazioni.</p>
+  <p>Le animazioni funzionano interamente nel browser: le parole eventualmente inserite durante le attività restano sul dispositivo e vengono cancellate alla chiusura o al ricaricamento della pagina.</p>
+
+  <h2>Hosting</h2>
+  <p>Il sito è ospitato su GitHub Pages, servizio di GitHub, Inc. Come ogni server web, GitHub può registrare dati tecnici delle richieste (ad esempio l'indirizzo IP) per garantire la sicurezza e il funzionamento del servizio. Il trattamento è descritto nel <a href="https://docs.github.com/it/site-policy/privacy-policies/github-general-privacy-statement">GitHub General Privacy Statement</a>.</p>
+
+  <h2>Collegamenti esterni</h2>
+  <p>Alcune pagine contengono collegamenti facoltativi a video su YouTube. I contenuti esterni non vengono caricati automaticamente: si aprono in una nuova scheda solo se selezionati e sono soggetti all'informativa privacy del rispettivo servizio.</p>
+
+  <h2>Contatti</h2>
+  <p>Per domande su questa informativa è possibile aprire una segnalazione nel <a href="https://github.com/kindaichi-doyle/cybernani/issues">repository del progetto</a>.</p>
+</main>
+<footer>
+  <div class="wrap"><a href="./">← Torna a cybernani</a></div>
+</footer>
+</body>
+</html>

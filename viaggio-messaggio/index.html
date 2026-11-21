@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-tjbfVW+bF4WncokMsJxBiejXS8mahCbw7t1P+Y9PKCU='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hncvTm83ApwvpxVBaAiC7yIF1igXNDL2dBTblvPb1uY='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Il viaggio di un messaggio · cybernani</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Il viaggio di un messaggio: un'animazione interattiva per spiegare ai bambini cosa succede quando mandi un messaggio su Internet. Wi-Fi, router, fibra, cavi sottomarini, data center: di chi è ogni pezzo e chi può leggere il messaggio.">
@@ -99,6 +99,50 @@ body.bottom #hud{top:var(--top)}
   text-shadow:0 8px 40px rgba(20,26,38,.25);letter-spacing:-.02em;pointer-events:none;opacity:0;transform:scale(.8);transition:all .35s cubic-bezier(.3,1.6,.6,1);z-index:4}
 #flash.show{opacity:1;transform:scale(1)}
 #tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font:700 15px Bricolage;padding:6px 10px;border-radius:8px;display:none;z-index:5}
+
+/* ---------- mobile ---------- */
+#world{touch-action:none}
+.grab{display:none}
+.mnav{display:flex;gap:8px;margin-left:auto}
+.mnav button{font:700 15px/1 Bricolage;min-width:44px;height:40px}
+.mnav #bPrev{font-size:17px}
+@media (max-width:820px){
+  :root{--top:58px;--cardH:46vh}
+  #steps{top:10px;left:10px!important;right:10px!important;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  #steps::-webkit-scrollbar{display:none}
+  #steps button{flex:0 0 auto;height:36px}
+  #steps a.page{flex:0 0 auto;margin-left:6px}
+  body.bottom #card{display:flex;flex-direction:column;gap:10px;padding:22px 18px 12px;border-radius:18px 18px 0 0;height:var(--cardH)}
+  body.mini #card{height:auto}
+  body.mini #card .fields{display:none}
+  .grab{display:block;position:absolute;top:0;left:50%;transform:translateX(-50%);width:84px;height:22px;border:0;background:none;cursor:pointer;padding:0}
+  .grab::after{content:"";display:block;width:44px;height:5px;border-radius:3px;background:#47546d;margin:8px auto 0}
+  .kicker{font-size:11px}
+  #card h1{font-size:24px;margin-top:6px}
+  .fields{font-size:16px;gap:10px}
+  .lead{font-size:17px}
+  .ricorda{font-size:18px;padding:10px 14px}
+  .f .lab{font-size:11px}
+  .vids a{font-size:15px}
+  .foot{gap:8px;padding-top:10px}
+  .foot .keys{display:none}
+  .foot button{padding:10px 14px}
+  #hud{transform:scale(.56);transform-origin:top left;left:10px}
+  body.bottom #hud,body.side #hud{top:var(--top);bottom:auto}
+  #tip{display:none!important}
+  #flash{top:16%}
+}
+@media (max-height:520px) and (orientation:landscape){
+  :root{--top:52px;--cardW:min(44vw,420px)}
+  #steps{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  #steps button{flex:0 0 auto;height:32px}
+  #card{padding:14px 16px 10px;gap:8px}
+  #card h1{font-size:22px}
+  .fields{font-size:15px;gap:8px}
+  .foot .keys{display:none}
+  #hud{transform:scale(.6);transform-origin:bottom left;left:8px}
+  body.side #hud{bottom:8px}
+}
 </style>
 </head>
 <body class="bottom">
@@ -398,7 +442,8 @@ const PH_S={x:445,y:1432,w:100,h:128}, PH_M={x:9855,y:1432,w:100,h:128};
 const STOPS=[
  {nm:'Mappa',title:'Il viaggio di un messaggio',layout:'bottom',rect:OV,at:0,
   lead:'Sofia vive in Italia. Il suo amico Sam vive negli Stati Uniti, dall\'altra parte dell\'oceano. Sofia scrive: <b>«Ciao dall\'Italia!»</b><br>Come fa il messaggio ad attraversare l\'oceano? Seguiamolo, fermata per fermata.',
-  hint:'Premi <kbd>→</kbd> per partire · clic su un pezzo della mappa per andarci · rotellina per zoomare, trascina per spostarti.'},
+  hint:'Premi <kbd>→</kbd> per partire · clic su un pezzo della mappa per andarci · rotellina per zoomare, trascina per spostarti.',
+  hintTouch:'Tocca <b>Avanti</b> per partire · tocca un pezzo della mappa per andarci · pizzica per zoomare, trascina per spostarti.'},
  {nm:'Telefono',title:'Il telefono di Sofia',rect:PH_S,at:'sofiaPhone',
   cos:'Sofia scrive e preme <b>invia</b>. Dentro il telefono il messaggio diventa numeri: tanti 0 e 1.',
   chi:'Il telefono è di Sofia (o dei suoi genitori). L\'app per chattare invece è di un\'<b>azienda</b>.',
@@ -481,6 +526,8 @@ const $=id=>document.getElementById(id);
 let W=innerWidth,H=innerHeight,cam={cx:5000,cy:1700,w:10500},cur=0,pos=0,locked=true,read=false,replyRead=false,token=0;
 let labels=[];
 const kz=()=>W/cam.w;
+function layoutFor(s){if(innerWidth<=820&&innerHeight>=innerWidth*.9)return'bottom';if(innerHeight<=520&&innerWidth>innerHeight)return'side';return s.layout==='bottom'?'bottom':'side'}
+function applyLayout(){const l=layoutFor(STOPS[cur]);document.body.classList.toggle('bottom',l==='bottom');document.body.classList.toggle('side',l!=='bottom')}
 function sceneBox(){
   const top=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top'))||72;
   const cs=document.body.classList, card=$('card').getBoundingClientRect();
@@ -488,7 +535,7 @@ function sceneBox(){
   if(cs.contains('side'))return{x:0,y:top,w:W-card.width,h:H-top};
   return{x:0,y:top,w:W,h:H-top-card.height};
 }
-function camFor(r){const b=sceneBox(),k=.9*Math.min(b.w/r.w,b.h/r.h);
+function camFor(r){const b=sceneBox(),crop=(innerWidth<=820&&innerHeight>innerWidth&&r.w<5000)?1.35:1,k=.9*Math.min(b.w*crop/r.w,b.h/r.h);
   return[r.x+r.w/2-(b.x+b.w/2-W/2)/k, r.y+r.h/2-(b.y+b.h/2-H/2)/k, W/k]}
 function camForPoint(p,k){const b=sceneBox();return[p.x-(b.x+b.w/2-W/2)/k,p.y-(b.y+b.h/2-H/2)/k,W/k]}
 function setCam(a){cam.cx=a[0];cam.cy=a[1];cam.w=a[2];applyCam()}
@@ -574,17 +621,20 @@ function field(lab,txt,cls=''){return txt?`<div class="f ${cls}"><div class="lab
 function renderCard(){
   const s=STOPS[cur];let v='';
   if(s.vede){const lv=typeof s.vede==='string';v=`<div class="f vede"><div class="lab">Chi può leggerlo?${lv?'':`<span class="chip ${locked?'':'off'}">${locked?'con lucchetto':'senza lucchetto'}</span>`}</div><div>${lv?s.vede:(locked?s.vede.on:s.vede.off)}</div></div>`}
-  $('card').innerHTML=`<div><div class="kicker">${cur===0?'cybernani':`Fermata ${cur} di ${STOPS.length-1}`}</div><h1>${s.title}</h1></div>
-  <div class="fields">${s.lead?`<p class="lead">${s.lead}</p>`:''}${s.hint?`<p class="hint">${s.hint}</p>`:''}
+  $('card').innerHTML=`<button class="grab" id="bSheet" aria-label="Mostra o nascondi il testo"></button><div><div class="kicker">${cur===0?'cybernani':`Fermata ${cur} di ${STOPS.length-1}`}</div><h1>${s.title}</h1></div>
+  <div class="fields">${s.lead?`<p class="lead">${s.lead}</p>`:''}${s.hint?`<p class="hint">${(matchMedia('(pointer:coarse)').matches&&s.hintTouch)||s.hint}</p>`:''}
   ${field('Cos\'è',s.cos)}${field('Di chi è',s.chi)}${v}${field('Lo sapevi?',s.curio,'curio')}${s.ricorda?`<div class="ricorda">${s.ricorda}</div>`:''}${s.video?`<div class="f video"><div class="lab">Guarda dal vero <kbd>V</kbd></div><div class="vids">${s.video.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener noreferrer">▶ ${t}</a>`).join('')}</div></div>`:''}</div>
   <div class="foot"><button id="bLock" class="${locked?'on':''}">Lucchetto: ${locked?'ON':'OFF'}</button>${STOPS[cur].lampo?'<button id="bRe">Rivedi ▶</button>':''}
-   <span><kbd>←</kbd><kbd>→</kbd> fermate · <kbd>Esc</kbd> vista intera · <kbd>L</kbd> lucchetto · <kbd>H</kbd> nascondi testo · <kbd>V</kbd> video · <kbd>F</kbd> schermo intero</span></div>`;
+   <span class="mnav"><button id="bPrev" aria-label="Fermata precedente">←</button><button id="bNext" aria-label="Fermata successiva">${cur===STOPS.length-1?'Fine':'Avanti →'}</button></span><span class="keys"><kbd>←</kbd><kbd>→</kbd> fermate · <kbd>Esc</kbd> vista intera · <kbd>L</kbd> lucchetto · <kbd>H</kbd> nascondi testo · <kbd>V</kbd> video · <kbd>F</kbd> schermo intero</span></div>`;
   $('bLock').onclick=()=>{locked=!locked;renderLock()};
+  $('bPrev').onclick=()=>goTo(cur-1);$('bNext').onclick=()=>goTo(cur+1);$('bPrev').disabled=cur===0;
+  $('bSheet').onclick=()=>{document.body.classList.toggle('mini');setCam(camFor(STOPS[cur].rect))};
   if($('bRe'))$('bRe').onclick=()=>goTo(cur,{force:true});
 }
 function renderSteps(){
   $('steps').innerHTML=STOPS.map((s,i)=>`<button data-i="${i}" class="${i===cur?'cur':i<cur?'done':''}" title="${s.nm}">${i===0?'⌂':i}<span class="nm">${s.nm}</span></button>`).join('')+`<a class="page" href="../intelligenza-artificiale/">Intelligenza artificiale →</a><a class="page home" href="../">cybernani</a>`;
-  $('steps').querySelectorAll('button').forEach(b=>b.onclick=()=>goTo(+b.dataset.i))}
+  $('steps').querySelectorAll('button').forEach(b=>b.onclick=()=>goTo(+b.dataset.i));
+  const c=$('steps').querySelector('.cur');if(c&&$('steps').scrollWidth>$('steps').clientWidth)$('steps').scrollTo({left:c.offsetLeft-$('steps').clientWidth/2+c.offsetWidth/2,behavior:'smooth'})}
 function renderShow(){svg.querySelectorAll('.only').forEach(g=>g.style.display=g.dataset.show.split(',').includes(String(cur))?'inline':'none')}
 function setPos(s){pos=s;renderTrail();renderPackets();renderPhones()}
 function flash(t){const f=$('flash');if(!t){f.classList.remove('show');return}f.textContent=t;f.classList.add('show')}
@@ -597,7 +647,7 @@ async function goTo(i,o={}){
   if(i===cur&&!o.force&&!o.replay){await camTo(camFor(STOPS[i].rect));return}
   const prev=o.replay?i-1:cur;cur=i;token++;const my=token;
   const s=STOPS[i];
-  document.body.classList.toggle('bottom',s.layout==='bottom');document.body.classList.toggle('side',s.layout!=='bottom');
+  applyLayout();
   if(i<11)read=false;if(i>=12)read=true;replyRead=i>=14;
   flash('');renderCard();renderSteps();renderShow();
   if(s.lampo){setPos(0);await camTo(camFor(s.rect));if(my!==token)return;await new Promise(r=>setTimeout(r,350));if(my!==token)return;
@@ -622,12 +672,18 @@ function worldPt(px,py){const k=kz();return{x:cam.cx+(px-W/2)/k,y:cam.cy+(py-H/2
 function hitAt(px,py){const p=worldPt(px,py);let best=null;
   for(const[r,i]of HITS)if(p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h&&(!best||r.w*r.h<best[0].w*best[0].h))best=[r,i];return best}
 
-/* input */
-let drag=null;
-svg.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,moved:false};svg.setPointerCapture(e.pointerId)});
+/* input: mouse drag, touch drag, pinch zoom, tap/click */
+let drag=null,pinch=null;const ptrs=new Map();
+const two=()=>{const[a,b]=[...ptrs.values()];return{d:Math.hypot(a.x-b.x,a.y-b.y)||1,mx:(a.x+b.x)/2,my:(a.y+b.y)/2}};
+svg.addEventListener('pointerdown',e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});svg.setPointerCapture(e.pointerId);
+  if(ptrs.size===1)drag={x:e.clientX,y:e.clientY,moved:false};
+  else if(ptrs.size===2){token++;if(drag)drag.moved=true;pinch=two()}});
 svg.addEventListener('pointermove',e=>{
-  if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved&&Math.hypot(dx,dy)>5){drag.moved=true;token++;svg.classList.add('dragging')}
+  if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch&&ptrs.size>=2){const n=two(),k=kz();setCam([cam.cx-(n.mx-pinch.mx)/k,cam.cy-(n.my-pinch.my)/k,cam.w]);zoomAt(n.mx,n.my,n.d/pinch.d);pinch=n;return}
+  if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved&&Math.hypot(dx,dy)>(e.pointerType==='mouse'?5:10)){drag.moved=true;token++;svg.classList.add('dragging')}
     if(drag.moved){const k=kz();setCam([cam.cx-dx/k,cam.cy-dy/k,cam.w]);drag.x=e.clientX;drag.y=e.clientY}return}
+  if(e.pointerType!=='mouse')return;
   const h=hitAt(e.clientX,e.clientY),hv=$('hover'),tip=$('tip');
   const k=kz(),small=h&&h[0].w*k<W*.8&&h[1]!==cur;
   if(small){const r=h[0];hv.setAttribute('display','');hv.setAttribute('x',r.x);hv.setAttribute('y',r.y);hv.setAttribute('width',r.w);hv.setAttribute('height',r.h);
@@ -635,8 +691,12 @@ svg.addEventListener('pointermove',e=>{
     tip.style.display='block';tip.style.left=(e.clientX+16)+'px';tip.style.top=(e.clientY+16)+'px';tip.textContent=`${h[1]} · ${STOPS[h[1]].nm}`}
   else{hv.setAttribute('display','none');svg.classList.remove('pointing');tip.style.display='none'}
 });
-svg.addEventListener('pointerup',e=>{const d=drag;drag=null;svg.classList.remove('dragging');
-  if(d&&!d.moved){const h=hitAt(e.clientX,e.clientY);if(h)goTo(h[1])}});
+const endPtr=e=>{const wasPinch=!!pinch;ptrs.delete(e.pointerId);
+  if(ptrs.size<2)pinch=null;
+  if(wasPinch){drag=null;return}
+  if(ptrs.size===0){const d=drag;drag=null;svg.classList.remove('dragging');
+    if(d&&!d.moved&&e.type==='pointerup'){const h=hitAt(e.clientX,e.clientY);if(h)goTo(h[1])}}};
+svg.addEventListener('pointerup',endPtr);svg.addEventListener('pointercancel',endPtr);
 svg.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(-e.deltaY*.0015))},{passive:false});
 addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
@@ -653,14 +713,14 @@ addEventListener('keydown',e=>{
   else if(k==='+'||k==='=')zoomAt(W/2,H/2,1.3);
   else if(k==='-'||k==='_')zoomAt(W/2,H/2,1/1.3);
 });
-addEventListener('resize',()=>{W=innerWidth;H=innerHeight;setCam(camFor(STOPS[cur].rect))});
+addEventListener('resize',()=>{W=innerWidth;H=innerHeight;applyLayout();setCam(camFor(STOPS[cur].rect))});
 
 /* boot */
 async function boot(){
   try{await Promise.all([document.fonts.load('700 20px Bricolage'),document.fonts.load('400 20px Atkinson'),document.fonts.load('700 20px Atkinson')])}catch(_){}
   svg.querySelectorAll('.lbl').forEach(g=>{const t=g.querySelector('text'),r=g.querySelector('.pill'),sz=+g.dataset.size,b=t.getBBox();
     r.setAttribute('x',b.x-sz*.6);r.setAttribute('width',b.width+sz*1.2);labels.push({el:g,size:sz,v:true})});
-  renderLock();renderSteps();renderShow();setPos(0);setCam(camFor(OV));
+  applyLayout();renderLock();renderSteps();renderShow();setPos(0);setCam(camFor(OV));
 }
 boot();
 </script>
